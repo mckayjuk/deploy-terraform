@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 # Create an Ubuntu Web Server
-resource "aws_instance" "j2k2-test-build" {
+resource "aws_instance" "Web" {
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
   subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
@@ -24,7 +24,7 @@ resource "aws_instance" "j2k2-test-build" {
 }
 
 # Create an Ubuntu Bastion Server
-resource "aws_instance" "j2k2-test-build" {
+resource "aws_instance" "Bastion" {
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
   subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
