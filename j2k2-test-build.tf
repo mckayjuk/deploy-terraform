@@ -13,9 +13,9 @@ provider "aws" {
   region     = "${var.region}"
 }
 
-# Create the Web Server(s)
+# Create an Ubuntu Bastion Server
 resource "aws_instance" "j2k2-test-build" {
-  ami           = "ami-bb9a6bc2"
+  ami           = "ami-785db401"
   instance_type = "t2.micro"
   subnet_id     = "subnet-faea35a1"
   key_name      = "j2k2lablinux"
