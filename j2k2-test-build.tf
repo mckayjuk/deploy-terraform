@@ -6,7 +6,7 @@
 # Web servers deployed across AZs in Ireland. mySQL DB using RDS.
 # This script will build the infra and Ansible will create the HTML
 
-# This script is stored in GitHub - https://github.com/d3adv3gas/aws-test
+# This script is stored in GitHub - git@github.com:d3adv3gas/aws-test.git
 
 # Setup the Provider - Variable provied by file
 provider "aws" {
@@ -21,7 +21,7 @@ resource "aws_instance" "j2k2-test-build" {
   instance_type = "t2.micro"
   subnet_id     = "subnet-faea35a1"
   key_name      = "j2k2lablinux"
-  security_groups = ["sg-a7ec92df"]
+  security_groups = ["sg-1f8df464"]
   associate_public_ip_address = "true"
 }
 
