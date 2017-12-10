@@ -15,12 +15,12 @@ provider "aws" {
 
 # Create an Ubuntu Bastion Server
 resource "aws_instance" "j2k2-test-build" {
-  ami           = "ami-785db401"
-  instance_type = "t2.micro"
-  subnet_id     = "subnet-faea35a1"
-  key_name      = "j2k2lablinux"
-  security_groups = ["sg-1f8df464"]
-  associate_public_ip_address = "true"
+  ami           = "ami-785db401" # Machine Version
+  instance_type = "t2.micro" # Instance Type
+  subnet_id     = "subnet-faf02fa1" # Add to this subnet
+  key_name      = "j2k2lablinux" # Use this key
+  security_groups = ["sg-1f8df464"] # Add to the Bastion Security Group
+  associate_public_ip_address = "true" # Add a Public IP
 }
 
 
