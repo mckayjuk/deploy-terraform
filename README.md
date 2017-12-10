@@ -1,7 +1,5 @@
 ## Repo Details
-Author Jamie McKay
-Version 0.1
-Date 10/12/2017
+* **Author** - Jamie McKay
 
 ## Script Goals
 * Build a 2 Tier Environment (web/app, Data). 
