@@ -10,6 +10,7 @@
 provider "aws" {
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
+  public_key = "${var.public_key}"
   region     = "${var.region}"
 }
 
@@ -21,6 +22,10 @@ resource "aws_instance" "Web" {
   key_name      = "j2k2lablinux" # Use this key
   security_groups = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
+  
+  # Apply the Bastion Public SSH Key to Authorized_Keys
+  provisioner "remote-exec" {
+    command = "echo ${public_key} >> /home/ubuntu/.ssh/authorized_keys"
 }
 
 # Create an Ubuntu Bastion Server
