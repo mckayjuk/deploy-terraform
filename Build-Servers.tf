@@ -10,7 +10,6 @@
 provider "aws" {
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
-  public_key = "${var.public_key}"
   region     = "${var.region}"
 }
 
@@ -23,14 +22,21 @@ resource "aws_instance" "Web" {
   security_groups = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
   
+  # Create the connection for remote execution
+  connection {
+    type     = "ssh"
+    user     = "ubuntu"
+    #password = "${var.root_password}"
+  }
   # Apply the Bastion Public SSH Key to Authorized_Keys
   provisioner "remote-exec" {
-    command = "echo ${public_key} >> /home/ubuntu/.ssh/authorized_keys"
+    inline = ["echo ${var.public_key} >> /home/ubuntu/.ssh/authorized_keys"
+    ]
   } 
 }
 
 # Create an Ubuntu Bastion Server
-resource "aws_instance" "Bastion" {
+/*#resource "aws_instance" "Bastion" {
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
   subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
@@ -38,4 +44,5 @@ resource "aws_instance" "Bastion" {
   security_groups = ["sg-1f8df464"] # Add to the Bastion Security Group
   associate_public_ip_address = "true" # Add a Public IP
 }
+*/
 
