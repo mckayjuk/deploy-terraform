@@ -26,6 +26,7 @@ resource "aws_instance" "Web" {
   # Apply the Bastion Public SSH Key to Authorized_Keys
   provisioner "remote-exec" {
     command = "echo ${public_key} >> /home/ubuntu/.ssh/authorized_keys"
+  } 
 }
 
 # Create an Ubuntu Bastion Server
