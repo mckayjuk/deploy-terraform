@@ -26,11 +26,18 @@ resource "aws_instance" "Web" {
   connection {
     type     = "ssh"
     user     = "ubuntu"
-    #password = "${var.root_password}"
+    private_key = "${file("C:/Users/Jamie/Downloads/j2k2lablinux.pem")}"
   }
+
+  # Copies the public key for the bastion server to the remote host
+  provisioner "file" {
+    source      = "E:/Scripts/Projects/terraform/bastion.txt"
+    destination = "/tmp/bastion.txt"
+  }
+  
   # Apply the Bastion Public SSH Key to Authorized_Keys
   provisioner "remote-exec" {
-    inline = ["echo ${var.public_key} >> /home/ubuntu/.ssh/authorized_keys"
+    inline = ["cat /tmp/bastion.txt >> /home/ubuntu/.ssh/authorized_keys"
     ]
   } 
 }
