@@ -3,3 +3,8 @@
 variable "region" {
   default = "eu-west-1"
 }
+variable "public-subnets" {
+  description = "Run the EC2 Instances in these Public Subnets"
+  type = "list"
+  default = ["subnet-faf02fa1", "subnet-46178c0f", "subnet-304fdc57"]
+}

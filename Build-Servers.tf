@@ -21,17 +21,23 @@ terraform {
     bucket  = "j2k2-tf-bucket"
     key     = "tfstate/terraform.tfstate"
     region  = "eu-west-1"
+    encrypt = "true"
   }
 }
 
 # Create an Ubuntu Web Server
 resource "aws_instance" "Web" {
+  count         = 3
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
-  subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
+  #subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
   key_name      = "j2k2lablinux" # Use this key
   security_groups = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
+  subnet_id       = "${element(var.public-subnets, count.index)}"
+  tags {
+    Name = "j2k2-web-0${count.index + 1}"
+  }
 
   # Create the connection for remote execution
   connection {
@@ -54,14 +60,3 @@ resource "aws_instance" "Web" {
     ]
   }
 }
-
-/*  Create an Ubuntu Bastion Server
-resource "aws_instance" "Bastion" {
-  ami           = "ami-785db401" # Machine Version
-  instance_type = "t2.micro" # Instance Type
-  subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
-  key_name      = "j2k2lablinux" # Use this key
-  security_groups = ["sg-1f8df464"] # Add to the Bastion Security Group
-  associate_public_ip_address = "true" # Add a Public IP
-} */
-
