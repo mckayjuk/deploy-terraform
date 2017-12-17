@@ -9,9 +9,15 @@
 # Setup the Provider - Variable provied by file
 provider "aws" {
   profile   = "default"
-  #access_key = "${var.access_key}" # Not required unless you do not want to use .aws credentials
-  #secret_key = "${var.secret_key}" # Not required unless you do not want to use .aws credentials
-  shared_credentials_file = "/Users/V3gas/.aws/credentials"
+  
+  /*
+  # AWS Access Keys to be added to the local terraform.tfvars file if required
+  access_key = "${var.access_key}"
+  secret_key = "${var.secret_key}"
+  */
+
+  # AWS Access using the local AWS Credentials 
+  shared_credentials_file = "~/.aws/credentials"
   region     = "${var.region}"
 }
 
@@ -27,16 +33,15 @@ terraform {
 
 # Create an Ubuntu Web Server
 resource "aws_instance" "Web" {
-  count         = 3
+  count         = 3 # number of machines to build. Cannot be more than number of subnets listed in variable.tf
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
-  #subnet_id     = "subnet-faf02fa1" # Add to this Public subnet
   key_name      = "j2k2lablinux" # Use this key
-  security_groups = ["sg-a7ec92df"] # Add to the Web Security Group
+  vpc_security_group_ids = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
-  subnet_id       = "${element(var.public-subnets, count.index)}"
+  subnet_id       = "${var.public-subnets [count.index]}" # Public subnets listed in variables.tf. 
   tags {
-    Name = "j2k2-web-0${count.index + 1}"
+    Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number
   }
 
   # Create the connection for remote execution
