@@ -17,8 +17,7 @@ provider "aws" {
   */
 
   # AWS Access using the local AWS Credentials 
-  shared_credentials_file = "c:/users/Jamie/.aws/credentials" # Windows IDE
-  #shared_credentials_file = "~/.aws/credentials" # Linux IDE
+  shared_credentials_file = "~/.aws/credentials" # Linux IDE
   region     = "${var.region}"
 }
 
@@ -49,14 +48,12 @@ resource "aws_instance" "Web" {
   connection {
     type     = "ssh"
     user     = "ubuntu"
-    private_key = "${file("C:/Users/Jamie/Downloads/j2k2lablinux.pem")}" # Windows IDE
-    #private_key = "${file("~/Downloads/j2k2lablinux.pem")}" # Linux IDE
+    private_key = "${file("~/Downloads/j2k2lablinux.pem")}" # Linux IDE
   }
 
   # Copies the public key for the bastion server to the remote host
   provisioner "file" {
-    #source      = "E:/Scripts/Projects/terraform/bastion.txt"
-    source      = "/Users/V3gas/myprojects/bastion.txt"
+    source      = "~/myprojects/terraform/bastion.txt"
     destination = "/tmp/bastion.txt"
   }
   
