@@ -48,7 +48,7 @@ resource "aws_instance" "Web" {
   connection {
     type     = "ssh"
     user     = "ubuntu"
-    private_key = "${file("~/Downloads/j2k2lablinux.pem")}" # Linux IDE
+    private_key = "${file("~/.ssh/j2k2lablinux.pem")}" # Linux IDE
   }
 
   # Copies the public key for the bastion server to the remote host
