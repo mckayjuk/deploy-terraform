@@ -33,7 +33,7 @@ terraform {
 
 # Create an Ubuntu Web Server
 resource "aws_instance" "Web" {
-  count         = 2 # number of machines to build. Cannot be more than number of subnets listed in variable.tf
+  count         = 1 # number of machines to build. Cannot be more than number of subnets listed in variable.tf
   ami           = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
   key_name      = "j2k2lablinux" # Use this key
@@ -43,8 +43,8 @@ resource "aws_instance" "Web" {
   
   user_data = <<-EOF
     #!/bin/bash
-    echo "Hello - I am server A" > index.html
-    nohup busybox httpd -f -p 8080 &
+    echo "Hello - I am server A${count.index + 1}" > index.html
+    nohup busybox httpd -f -p ${var.web-ports} &
     EOF
   
   tags {
@@ -70,3 +70,4 @@ resource "aws_instance" "Web" {
     ]
   }
 }
+
