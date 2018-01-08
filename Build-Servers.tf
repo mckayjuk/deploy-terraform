@@ -40,9 +40,16 @@ resource "aws_instance" "Web" {
   vpc_security_group_ids = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
   subnet_id     = "${var.public-subnets [count.index]}" # Public subnets listed in variables.tf. 
+  
+  user_data = <<-EOF
+    #!/bin/bash
+    echo "Hello - I am server A" > index.html
+    nohup busybox httpd -f -p 8080 &
+    EOF
+  
   tags {
-    Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number
-  }
+    Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number  
+    }
 
   # Create the connection for remote execution
   connection {
