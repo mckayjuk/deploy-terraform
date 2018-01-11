@@ -2,9 +2,10 @@
 
 # Script Goals - Build 2 Load Balanced Web servers which can be accessed via tha bastion over SSH. 
 # Web servers deployed across AZs in Ireland
-# This script will build the infra and Ansible will create the HTML
 
-# This script is stored in GitHub - git@github.com:d3adv3gas/aws-test.git
+# Note to self - This will use ASG and build immutable Web Instances... i.e. no ssh access provided.
+
+# This script is stored in GitHub - git@github.com:d3adv3gas/j2k2-deploy
 
 # Setup the Provider - Variable provied by file
 provider "aws" {
@@ -32,74 +33,59 @@ terraform {
 }
 
 # Specify Data Surces
-data "aws_availability_zones" "all" {}
-
-# Create some Ubuntu Web Servers
-/* resource "aws_instance" "Web" {
-  count         = 1 # number of machines to build. Cannot be more than number of subnets listed in variable.tf
-  ami           = "ami-785db401" # Machine Version
-  instance_type = "t2.micro" # Instance Type
-  key_name      = "j2k2lablinux" # Use this key
-  vpc_security_group_ids = ["sg-a7ec92df"] # Add to the Web Security Group
-  associate_public_ip_address = "true" # Add a Public IP
-  subnet_id     = "${var.public-subnets [count.index]}" # Public subnets listed in variables.tf. 
-
-#tags {
-  #  Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number  
-  #}
-
-} */
+data "aws_availability_zones" "all" {} # List all AZs available
 
 # Create an Auto Scaling Group Launch Configuration
 resource "aws_launch_configuration" "Web-lc" {
-  name = "web-lc"
-  image_id          = "ami-785db401" # Machine Version
+  image_id = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
-  key_name      = "j2k2lablinux" # Use this key
-  security_groups = ["sg-a7ec92df"] # Add to the Web Security Group - This should be changed to build on createion.
-  associate_public_ip_address = "true" # Add a Public IP
-  # subnet_id     = "${var.public-subnets [count.index]}" # Public subnets listed in variables.tf. Removed and using availability_zones in asg instead.
+  key_name = "j2k2lablinux" # Use this key
+  security_groups = ["${aws_security_group.web-sg.id}"] # Add to the Web-sg Security Group
+  # associate_public_ip_address = "true" # Add a Public IP
+  # subnet_ids     = "${var.public-subnets [count.index]}"
   
   user_data = <<-EOF
     #!/bin/bash
-    echo "Hello - I am server A${count.index + 1}" > index.html
+    echo "Hello - I am server a server created via an AutoScaling Group" > index.html
     nohup busybox httpd -f -p ${var.web-ports} &
     EOF
 
   lifecycle {
     create_before_destroy = true
   }
-
-  # Create the connection for remote execution
-  connection {
-    type     = "ssh"
-    user     = "ubuntu"
-    private_key = "${file("~/.ssh/j2k2lablinux.pem")}" # Linux IDE
-  }
-
-  # Copies the public key for the bastion server to the remote host
-  provisioner "file" {
-    source      = "~/myprojects/terraform/bastion.txt"
-    destination = "/tmp/bastion.txt"
-  }
-  
-  # Apply the Bastion Public SSH Key to Authorized_Keys
-  provisioner "remote-exec" {
-    inline = ["cat /tmp/bastion.txt >> /home/ubuntu/.ssh/authorized_keys"]
-  }
 }
 
 resource "aws_autoscaling_group" "web-asg" {
   launch_configuration = "${aws_launch_configuration.Web-lc.id}"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
-  
-  min_size = 1
-  max_size = 2
+  vpc_zone_identifier = ["${var.private-subnets [count.index]}"] # Specify private subnets to deploy servers into
+
+  min_size = 2
+  max_size = 3
 
   tag {
     key = "Name"
     value = "web-asg"
     propagate_at_launch = true
   }
+
+  lifecycle {
+    create_before_destroy = "true"
+  }
 }
 
+resource "aws_security_group" "web-sg" { # Create a security group in Lab VPC
+  name = "web-sg"
+  vpc_id = "vpc-fb57cc9c"
+
+  ingress { # Specify ingress rules providing cidr blocks and security group ids (if required)
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["151.224.16.41/32","172.16.0.106/32"]
+  }
+
+  lifecycle {
+    create_before_destroy = "true"
+  }
+}
