@@ -25,7 +25,7 @@ provider "aws" {
 terraform {
   backend "s3" { # Use the noted S3 bucket to store state
     bucket  = "j2k2-tf-bucket"
-    key     = "tfstate/terraform.tfstate"
+    key     = "tfstate/terraform-web-servers.tfstate"
     region  = "eu-west-1"
     encrypt = "true"
   }
