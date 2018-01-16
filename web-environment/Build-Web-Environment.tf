@@ -250,6 +250,19 @@ resource "aws_elb" "web-lb" {
   }
 }
 
+########### Create a DNS Alias for the LB DNS Name ########################
+resource "aws_route53_record" "web-dnsalias" {
+    zone_id = "Z1MCK4K7BKD9T6" # Hosted Zone in Route53 for my dev domain.
+    name = "testapp.dev.j2k2lab.co.uk"
+    type = "A"
+
+    alias {
+        name = "${aws_elb.web-lb.dns_name}"
+        zone_id = "${aws_elb.web-lb.zone_id}"
+        evaluate_target_health = true
+    }
+}
+
 ########### Create the web server load balancer security group #########
 resource "aws_security_group" "weblb-sg" {
   name_prefix = "weblb-sg"
