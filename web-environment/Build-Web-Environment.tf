@@ -33,19 +33,19 @@ terraform {
 }
 
 ########## Specify Data Surces ########################################
-data "aws_availability_zones" "all" {} # List all AZs available
+data "aws_availability_zones" "available" {} # List all AZs available
 
 ########## Create an Auto Scaling Group Launch Configuration ##########
 resource "aws_launch_configuration" "Web-lc" {
-  name_prefix = "web-lc-" # don't pin the name as it affects ability to disconnect and recreate.
+  name_prefix = "web-lc-" # Do not pin the  Name as it affects ability to disconnect and recreate
   image_id = "ami-785db401" # Machine Version
   instance_type = "t2.micro" # Instance Type
   key_name = "j2k2lablinux" # Use this key
-  security_groups = ["${aws_security_group.web-sg.id}"] # Add to the Web-sg Security Group
+  security_groups = ["${aws_security_group.web-sg.id}"] 
   
-  user_data = <<-EOF # Configure user data... i.e. config to apply locally (without the use of remote-exec)
+  user_data = <<-EOF
     #!/bin/bash
-    echo "Hello - I am server a server created via an AutoScaling Group" > index.html #creates a simple web page
+    echo "Hello - I am a test web server behind a load balancer" > index.html
     nohup busybox httpd -f -p ${var.web-ports} &
     EOF
 
@@ -56,54 +56,163 @@ resource "aws_launch_configuration" "Web-lc" {
 
 ########## Create a VPC ################################################
 resource "aws_vpc" "testapp-dev-vpc" {
-  cidr_block = "172.16.4.0/22"
+  cidr_block = "172.16.8.0/21"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 
   tags {
-    name = "testapp-dev-vpc"
+    Name = "testapp-dev-vpc"
   }
+}
+
+########## Create an internet gateway and attach to vpc ################
+resource "aws_internet_gateway" "testapp-dev-vpc-igw" {
+  vpc_id = "${aws_vpc.testapp-dev-vpc.id}"
+
+  tags {
+    Name = "testapp-dev-vpc-igw"
+  }
+}
+
+########## Create a Public subnet in eu-west 1a #######################
+resource "aws_subnet" "testapp-dev-euw1a-public" {
+  vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
+  availability_zone = "${data.aws_availability_zones.available.names[0]}"
+  cidr_block = "172.16.8.0/24"
+  map_public_ip_on_launch = "true"
+  depends_on = ["aws_internet_gateway.testapp-dev-vpc-igw"]
+  
+  tags {
+    Name = "testapp-dev-euw1a-public"
+  }
+}
+
+########## Create a Route Table for Public subnet in eu-west 1a #######################
+resource "aws_route_table" "web-rt-pub1a" {
+  vpc_id = "${aws_vpc.testapp-dev-vpc.id}"
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.testapp-dev-vpc-igw.id}"
+  }
+
+tags {
+    Name = "web-rt-pub1a"
+  }
+}
+
+########## Create a Route Table Association for Public subnet in eu-west 1a #######################
+resource "aws_route_table_association" "web-rta-pub1a" {
+  subnet_id      = "${aws_subnet.testapp-dev-euw1a-public.id}"
+  route_table_id = "${aws_route_table.web-rt-pub1a.id}"
+}
+
+########## Create a Public subnet in eu-west 1b #######################
+resource "aws_subnet" "testapp-dev-euw1b-public" {
+  vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
+  availability_zone = "${data.aws_availability_zones.available.names[1]}"
+  cidr_block = "172.16.9.0/24"
+  map_public_ip_on_launch = "true"
+  depends_on = ["aws_internet_gateway.testapp-dev-vpc-igw"]
+  
+  tags {
+    Name = "testapp-dev-euw1b-public"
+  }
+}
+
+########## Create a Route Table for Public subnet in eu-west 1b #######################
+resource "aws_route_table" "web-rt-pub1b" {
+  vpc_id = "${aws_vpc.testapp-dev-vpc.id}"
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.testapp-dev-vpc-igw.id}"
+  }
+
+  tags {
+    Name = "web-rt-pub1b"
+  }
+}
+
+########## Create a Route Table Association for Public subnet in eu-west 1b #######################
+resource "aws_route_table_association" "web-rta-pub1b" {
+  subnet_id      = "${aws_subnet.testapp-dev-euw1b-public.id}"
+  route_table_id = "${aws_route_table.web-rt-pub1b.id}"
+}
+
+########## Create a Public subnet in eu-west 1c #######################
+resource "aws_subnet" "testapp-dev-euw1c-public" {
+  vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
+  availability_zone = "${data.aws_availability_zones.available.names[2]}"
+  cidr_block = "172.16.10.0/24"
+  map_public_ip_on_launch = "true"
+  depends_on = ["aws_internet_gateway.testapp-dev-vpc-igw"]
+
+  tags {
+    Name = "testapp-dev-euw1c-public"
+  }
+}
+
+########## Create a Route Table for Public subnet in eu-west 1c #######################
+resource "aws_route_table" "web-rt-pub1c" {
+  vpc_id = "${aws_vpc.testapp-dev-vpc.id}"
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.testapp-dev-vpc-igw.id}"
+  }
+
+  tags {
+    Name = "web-rt-pub1c"
+  }
+}
+
+########## Create a Route Table Association for Public subnet in eu-west 1c #######################
+resource "aws_route_table_association" "web-rta-pub1c" {
+  subnet_id      = "${aws_subnet.testapp-dev-euw1c-public.id}"
+  route_table_id = "${aws_route_table.web-rt-pub1c.id}"
 }
 
 ########## Create a Private subnet in eu-west 1a #######################
 resource "aws_subnet" "testapp-dev-euw1a-private" {
   vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
-  availability_zone = "${data.aws_availability_zones.all.names[0]}"
-  cidr_block = "172.16.4.0/24"
+  availability_zone = "${data.aws_availability_zones.available.names[0]}"
+  cidr_block = "172.16.11.0/24"
 
   tags {
-    name = "testapp-dev-euw1a-private"
+    Name = "testapp-dev-euw1a-private"
   }
 }
 
 ########## Create a Private subnet in eu-west 1b #######################
 resource "aws_subnet" "testapp-dev-euw1b-private" {
   vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
-  availability_zone = "${data.aws_availability_zones.all.names[1]}"
-  cidr_block = "172.16.5.0/24"
+  availability_zone = "${data.aws_availability_zones.available.names[1]}"
+  cidr_block = "172.16.12.0/24"
 
    tags {
-    name = "testapp-dev-euw1b-private"
+    Name = "testapp-dev-euw1b-private"
   }
 }
 
 ########## Create a Private subnet in eu-west 1c #######################
-
 resource "aws_subnet" "testapp-dev-euw1c-private" {
   vpc_id     = "${aws_vpc.testapp-dev-vpc.id}"
-  availability_zone = "${data.aws_availability_zones.all.names[2]}"
-  cidr_block = "172.16.6.0/24"
+  availability_zone = "${data.aws_availability_zones.available.names[2]}"
+  cidr_block = "172.16.13.0/24"
 
    tags {
-    name = "testapp-dev-euw1c-private"
+    Name = "testapp-dev-euw1c-private"
   }
 }
 
-########## Create the web autoscaling group#############################
-# 
+########## Create the web autoscaling group #############################
 resource "aws_autoscaling_group" "web-asg" {
-  name_prefix = "web-asg-"
+  name_prefix = "webASG-"
   launch_configuration = "${aws_launch_configuration.Web-lc.id}"
-  availability_zones = ["${data.aws_availability_zones.all.id}"]
+  availability_zones = ["${data.aws_availability_zones.available.id}"]
   vpc_zone_identifier = ["${aws_subnet.testapp-dev-euw1a-private.id}", "${aws_subnet.testapp-dev-euw1b-private.id}","${aws_subnet.testapp-dev-euw1c-private.id}"] # Specify private subnets to deploy servers into
+  load_balancers = ["${aws_elb.web-lb.id}"]
 
   min_size = 2
   max_size = 3
@@ -119,7 +228,51 @@ resource "aws_autoscaling_group" "web-asg" {
   }
 }
 
-########### Create the web server load balancer #############################
+########### Create the web server load balancer ########################
+resource "aws_elb" "web-lb" {
+  name_prefix = "webLB-"
+  subnets = ["${aws_subnet.testapp-dev-euw1a-public.id}","${aws_subnet.testapp-dev-euw1b-public.id}","${aws_subnet.testapp-dev-euw1c-public.id}"]
+  security_groups = ["${aws_security_group.weblb-sg.id}"]
+
+  listener {
+    lb_port = 80
+    lb_protocol = "http"
+    instance_port = 8080
+    instance_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 3
+    interval = 30
+    target = "HTTP:8080/"
+  }
+}
+
+########### Create the web server load balancer security group #########
+resource "aws_security_group" "weblb-sg" {
+  name_prefix = "weblb-sg"
+  vpc_id = "${aws_vpc.testapp-dev-vpc.id}"
+
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port = 8080
+    to_port = 8080
+    protocol = "tcp"
+    security_groups = ["${aws_security_group.web-sg.id}"]
+  }
+
+  lifecycle {
+    create_before_destroy = "true"
+  }
+}
 
 ########### Create the web Security Group #############################
 resource "aws_security_group" "web-sg" { # Create a security group in Lab VPC
@@ -130,7 +283,8 @@ resource "aws_security_group" "web-sg" { # Create a security group in Lab VPC
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["172.16.0.106/32"] # Which IPs does this relate to? You can also use other security groups
+    cidr_blocks = ["172.16.8.0/24","172.16.9.0/24","172.16.10.0/24"]
+    #security_groups = ["${aws_security_group.weblb-sg.id}"]
   }
 
   lifecycle {
