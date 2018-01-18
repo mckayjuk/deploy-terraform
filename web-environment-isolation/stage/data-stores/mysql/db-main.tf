@@ -17,7 +17,7 @@ terraform {
   instance_type = "t2.micro" # Instance Type
 } */
 
-#create the subnet group for the DB Instances
+#create the subnet group with subnets from var file for the DB Instances
 resource "aws_db_subnet_group" "mysql-subnet-group" {
   name       = "main"
   subnet_ids = ["${var.private-subnets}"]
