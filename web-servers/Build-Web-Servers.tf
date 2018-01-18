@@ -25,7 +25,7 @@ provider "aws" {
 terraform {
   backend "s3" { # Use the noted S3 bucket to store state
     bucket  = "j2k2-tf-bucket"
-    key     = "tfstate/terraform-web-servers.tfstate"
+    key     = "tfstate/web-servers/terraform.tfstate"
     region  = "eu-west-1"
     encrypt = "true"
   }
@@ -43,7 +43,7 @@ resource "aws_instance" "Web" {
   
   user_data = <<-EOF
     #!/bin/bash
-    echo "Hello - I am server A${count.index + 1}" > index.html
+    echo "Hello - I am server A${count.index + 1} built from 'build-web-servers script'" > index.html
     nohup busybox httpd -f -p ${var.web-ports} &
     EOF
   

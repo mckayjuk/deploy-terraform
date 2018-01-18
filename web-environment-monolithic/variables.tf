@@ -3,11 +3,6 @@
 variable "region" {
   default = "eu-west-1"
 }
-variable "private-subnets" {
-  description = "Run the EC2 Instances in these Public Subnets"
-  type = "list"
-  default = ["subnet-faea35a1", "subnet-d94cdfbe", "subnet-861289cf"]
-}
 
 variable "web-ports" {
   description = "The port which will be used to connect to the web servers"
