@@ -1,0 +1,1 @@
+## Web Server Isolation provides methods for isolating environments (Staging, Prod) and components, (web, database) using spearate Terraform Configs and 'remote_state' data sources.
