@@ -1,3 +1,8 @@
+# Region Var
+variable "region" {
+  default = "eu-west-1"
+}
+
 # Specify the public subnets to use.
 variable "public-subnets" {
   description = "Run the EC2 Instances in these Public Subnets"

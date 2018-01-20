@@ -9,3 +9,12 @@ variable "private-subnets" {
   type = "list"
   default = ["subnet-d94cdfbe", "subnet-faea35a1", "subnet-861289cf"]
 }
+
+# Create some output variables for use with remote state.
+output "address" {
+  value = "${aws_db_instance.web-db.address}"
+}
+
+output "port" {
+  value = "${aws_db_instance.web-db.port}"
+}

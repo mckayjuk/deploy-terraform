@@ -1,3 +1,30 @@
+provider "aws" {
+  profile   = "default"
+  shared_credentials_file = "~/.aws/credentials"   # AWS Access using the local AWS Credentials 
+  region     = "${var.region}"
+}
+
+# Create Remote State
+terraform {
+  backend "s3" { # Use the noted S3 bucket to store state
+    bucket  = "j2k2-tf-bucket"
+    key     = "tfstate/web-environment-isolation/services/web/terraform.tfstate"
+    region  = "eu-west-1"
+    encrypt = "true"
+  }
+}
+
+# Define some data sources
+data "terraform_remote_state" "db" {
+  backend = "s3"
+
+  config {
+    bucket  = "j2k2-tf-bucket"
+    key     = "tfstate/web-environment-isolation/stage/mysql/terraform.tfstate"
+    region  = "eu-west-1"
+  }
+}
+
 # Create an Ubuntu Web Server
 resource "aws_instance" "Web" {
   count         = 1 # number of machines to build. Cannot be more than number of subnets listed in variable.tf
@@ -10,7 +37,9 @@ resource "aws_instance" "Web" {
   
   user_data = <<-EOF
     #!/bin/bash
-    echo "Hello - I am server A${count.index + 1}" > index.html
+    echo "Hello - I am server A${count.index + 1}" >> index.html
+    echo "${data.terraform_remote_state.db.address}" >> index.html
+    echo "${data.terraform_remote_state.db.port}" >> index.html
     nohup busybox httpd -f -p ${var.web-ports} &
     EOF
   
