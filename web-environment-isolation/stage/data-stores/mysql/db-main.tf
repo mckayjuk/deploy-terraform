@@ -1,3 +1,5 @@
+# NOTE - - Currently I can't 'Destory' once built due to the requirment for a final snapshot. Look this up.
+
 provider "aws" {
     region = "eu-west-1"
 }
@@ -11,11 +13,6 @@ terraform {
     encrypt = "true"
   }
 }
-
-/* resource "aws_instance" "test" {
-  ami           = "ami-785db401" # Machine Version
-  instance_type = "t2.micro" # Instance Type
-} */
 
 #create the subnet group with subnets from var file for the DB Instances
 resource "aws_db_subnet_group" "mysql-subnet-group" {

@@ -4,7 +4,7 @@ provider "aws" {
   region     = "${var.region}"
 }
 
-# Create Remote State
+# Create State Backend
 terraform {
   backend "s3" { # Use the noted S3 bucket to store state
     bucket  = "j2k2-tf-bucket"
@@ -14,7 +14,7 @@ terraform {
   }
 }
 
-# Define some data sources
+# Define some remote data sources
 data "terraform_remote_state" "db" {
   backend = "s3"
 
@@ -34,35 +34,39 @@ resource "aws_instance" "Web" {
   vpc_security_group_ids = ["sg-a7ec92df"] # Add to the Web Security Group
   associate_public_ip_address = "true" # Add a Public IP
   subnet_id     = "${var.public-subnets [count.index]}" # Public subnets listed in variables.tf. 
-  
-  user_data = <<-EOF
-    #!/bin/bash
-    echo "Hello - I am server A${count.index + 1}" >> index.html
-    echo "${data.terraform_remote_state.db.address}" >> index.html
-    echo "${data.terraform_remote_state.db.port}" >> index.html
-    nohup busybox httpd -f -p ${var.web-ports} &
-    EOF
-  
+  user_data       = "${data.template_file.user_data.rendered}"
+
   tags {
-    Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number  
+      Name = "j2k2-web-0${count.index + 1}" # Give the server a name based on the index number  
+      }
+
+    # Create the connection for remote execution
+    connection {
+      type     = "ssh"
+      user     = "ubuntu"
+      private_key = "${file("~/.ssh/j2k2lablinux.pem")}" # Linux IDE
     }
 
-  # Create the connection for remote execution
-  connection {
-    type     = "ssh"
-    user     = "ubuntu"
-    private_key = "${file("~/.ssh/j2k2lablinux.pem")}" # Linux IDE
-  }
-
-  # Copies the public key for the bastion server to the remote host
-  provisioner "file" {
-    source      = "~/myprojects/terraform/bastion.txt"
-    destination = "/tmp/bastion.txt"
+    # Copies the public key for the bastion server to the remote host
+    provisioner "file" {
+      source      = "~/myprojects/terraform/bastion.txt"
+      destination = "/tmp/bastion.txt"
+    }
+    
+    # Apply the Bastion Public SSH Key to Authorized_Keys
+    provisioner "remote-exec" {
+      inline = ["cat /tmp/bastion.txt >> /home/ubuntu/.ssh/authorized_keys"
+      ]
+    }
   }
   
-  # Apply the Bastion Public SSH Key to Authorized_Keys
-  provisioner "remote-exec" {
-    inline = ["cat /tmp/bastion.txt >> /home/ubuntu/.ssh/authorized_keys"
-    ]
+data "template_file" "user_data" {
+  template = "${file("user-data.sh")}"
+  vars {
+    server_port = "${var.web-ports}"
+    db_address = "${data.terraform_remote_state.db.address}"
+    db_port = "${data.terraform_remote_state.db.port}"
   }
 }
+  
+  
